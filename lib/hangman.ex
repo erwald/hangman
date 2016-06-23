@@ -1,6 +1,8 @@
 defmodule Hangman do
   use Application
 
+  @game_server_name Hangman.GameServer
+
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
@@ -13,6 +15,7 @@ defmodule Hangman do
       supervisor(Hangman.Repo, []),
       # Here you could define other workers and supervisors as children
       # worker(Hangman.Worker, [arg1, arg2, arg3]),
+      worker(Hangman.GameServer, [@game_server_name])
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

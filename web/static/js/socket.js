@@ -1,6 +1,3 @@
-// NOTE: The contents of this file will only be executed if
-// you uncomment its entry in "web/static/js/app.js".
-
 // To use Phoenix channels, the first step is to import Socket
 // and connect at the socket path in "lib/my_app/endpoint.ex":
 import {Socket} from "phoenix"
@@ -54,9 +51,31 @@ let socket = new Socket("/socket", {params: {token: window.userToken}})
 socket.connect()
 
 // Now that you are connected, you can join channels with a topic:
-let channel = socket.channel("topic:subtopic", {})
+let channel = socket.channel("games:1", {})
+let gameStateContainer = $("#game-state")
+let gameInput = $("#game-input")
+let gameLogContainer = $("#game-log")
+
+gameInput.on("keypress", event => {
+  if (event.keyCode === 13) { // Pressed enter.
+    let key = gameInput.val()
+    if (/[a-zA-Z]/.test(key)) { // Single alphabetical character.
+      channel.push("new:guess", {letter: key})
+      gameInput.val("")
+    }
+  }
+})
+
 channel.join()
   .receive("ok", resp => { console.log("Joined successfully", resp) })
   .receive("error", resp => { console.log("Unable to join", resp) })
+
+channel.on("new:guess", msg => {
+  gameLogContainer.append(`<p>Somebody guessed ${msg.letter}.</p>`)
+})
+
+channel.on("new:state", msg => {
+  gameStateContainer.text(msg.state)
+})
 
 export default socket
