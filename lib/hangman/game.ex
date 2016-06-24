@@ -1,7 +1,13 @@
 defmodule Hangman.Game do
   use Timex
 
-  defstruct phrase: "", guesses: [], last_guess_time: {0, 0, 0}, progress: :in_progress, max_guesses: 1
+  @min_time_after_guess 2 # In seconds.
+
+  defstruct phrase: "",
+    guesses: [],
+    last_guess_time: {0, 0, 0},
+    progress: :in_progress,
+    max_guesses: 1
 
   @doc """
   Returns the initial state of a game.
@@ -40,22 +46,24 @@ defmodule Hangman.Game do
   end
 
   @doc """
-  A player makes a guess. If the guess has already been
-  made, or if less than 2 seconds have passed since the
-  last guess, it is ignored.
+  A player makes a guess. If the game is over, or if the guess has already been
+  made, or if less than 2 seconds have passed since the last guess, it is
+  ignored.
   """
   def guess(state, letter) do
+    {is_finished, _} = is_finished?(state)
     cond do
-      is_finished?(state) == {true, _} ->
+      is_finished ->
         {:finished, state}
       Enum.member?(state.guesses, letter) ->
         {:duplicate, state}
-      Time.elapsed(state.last_guess_time, :seconds) < 2 ->
+      Time.elapsed(state.last_guess_time, :seconds) < @min_time_after_guess ->
         {:too_soon, state}
       true ->
-        updated_guesses = [letter | state.guesses]
-        new_state = %{state | guesses: updated_guesses, last_guess_time: Time.now}
-        {:ok, new_state}
+        new_guesses = [letter | state.guesses]
+        new_state = %{state | guesses: new_guesses, last_guess_time: Time.now}
+        {_, new_progress} = is_finished?(new_state)
+        {:ok, %{new_state | progress: new_progress}}
     end
   end
 
@@ -68,9 +76,9 @@ defmodule Hangman.Game do
   """
   def is_finished?(state) do
     cond do
-      is_lost?(state) -> {true, :loss}
-      is_won?(state) -> {true, :win}
-      true -> {false, nil}
+      is_lost?(state) -> {true, :lost}
+      is_won?(state) -> {true, :won}
+      true -> {false, :in_progress}
     end
   end
 
@@ -86,8 +94,8 @@ defmodule Hangman.Game do
     end)
   end
 
-  # Takes a string and returns a list of unique
-  # letters (filtering out any non-letter characters).
+  # Takes a string and returns a list of unique letters (filtering out any
+  # non-letter characters).
   defp unique_letters_in_string(string) do
     string
     |> String.codepoints
