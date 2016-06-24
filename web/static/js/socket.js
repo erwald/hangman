@@ -71,7 +71,22 @@ channel.join()
   .receive("error", resp => { console.log("Unable to join", resp) })
 
 channel.on("new:guess", msg => {
-  gameLogContainer.append(`<p>Somebody guessed ${msg.letter} ${msg.result}.</p>`)
+  var messageForUser = ""
+  switch (msg.result) {
+    case "finished":
+      messageForUser = `Somebody tried to make a guess, but the game was already over.`
+      break;
+    case "duplicate":
+      messageForUser = `Somebody tried to guess ${msg.letter}, but it had already been made.`
+      break;
+    case "too_soon":
+      messageForUser = `Somebody wanted to guess ${msg.letter}, but it was too soon after the previous guess.`
+      break;
+    case "ok":
+      messageForUser = `<b>Somebody guessed ${msg.letter}.</b>`
+      break;
+  }
+  gameLogContainer.append(`<p>${messageForUser}</p>`)
 })
 
 channel.on("new:state", msg => {

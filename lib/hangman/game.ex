@@ -71,14 +71,14 @@ defmodule Hangman.Game do
   """
   def is_finished?(state) do
     cond do
-      is_lost?(state) -> {true, :lost}
       is_won?(state) -> {true, :won}
+      is_lost?(state) -> {true, :lost}
       true -> {false, :in_progress}
     end
   end
 
   defp is_lost?(state) do
-    Enum.count(state.guesses) > state.max_guesses
+    Enum.count(state.guesses) >= state.max_guesses
   end
 
   defp is_won?(state) do
