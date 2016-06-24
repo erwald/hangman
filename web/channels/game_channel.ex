@@ -9,7 +9,11 @@ defmodule Hangman.GameChannel do
   end
 
   def handle_info(:after_join, socket) do
+    state = Hangman.GameServer.get_state(@game_server_name)
+
     broadcast!(socket, "player:joined", %{})
+    broadcast!(socket, "new:state", %{state: state})
+
     {:noreply, socket}
   end
 

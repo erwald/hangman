@@ -23,25 +23,20 @@ defmodule Hangman.Game do
   end
 
   @doc """
-  Returns the game state as a prettily formated string.
+  Returns the game state scrubbed from data that the players shouldn't see.
   """
-  def pretty_string(state) do
-    phrase = state |> pretty_phrase
-    guesses = state.guesses |> Enum.join(", ")
-    remaining = state.max_guesses - Enum.count(state.guesses)
-
-    "“#{phrase}”, with guesses: #{guesses} (#{remaining} remaining)"
+  def scrubbed_state(state) do
+    state
+    |> Map.put(:phrase, scrubbed_phrase(state))
+    |> Map.take([:phrase, :guesses, :progress, :max_guesses])
   end
 
-  defp pretty_phrase(state) do
+  defp scrubbed_phrase(state) do
     state.phrase
     |> String.codepoints
     |> Enum.map(fn(x) ->
-      if x =~ ~r/[a-zA-Z]/ && !Enum.member?(state.guesses, x) do
-        "_"
-      else
-        x
-      end
+      is_revealed = Enum.member?(state.guesses, String.downcase(x))
+      if x =~ ~r/[a-zA-Z]/ && !is_revealed, do: "_", else: x
     end)
   end
 
@@ -60,7 +55,7 @@ defmodule Hangman.Game do
       Time.elapsed(state.last_guess_time, :seconds) < @min_time_after_guess ->
         {:too_soon, state}
       true ->
-        new_guesses = [letter | state.guesses]
+        new_guesses = [String.downcase(letter) | state.guesses] |> Enum.sort
         new_state = %{state | guesses: new_guesses, last_guess_time: Time.now}
         {_, new_progress} = is_finished?(new_state)
         {:ok, %{new_state | progress: new_progress}}
@@ -94,14 +89,15 @@ defmodule Hangman.Game do
     end)
   end
 
-  # Takes a string and returns a list of unique letters (filtering out any
-  # non-letter characters).
+  # Takes a string and returns a list of unique lowercase letters (filtering out
+  # any non-letter characters).
   defp unique_letters_in_string(string) do
     string
     |> String.codepoints
     |> Enum.filter(fn(x) ->
       x =~ ~r/[a-zA-Z]/
     end)
+    |> Enum.map(&String.downcase(&1))
   end
 
   defp phrases do

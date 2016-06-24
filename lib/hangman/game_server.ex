@@ -35,7 +35,7 @@ defmodule Hangman.GameServer do
 
   # Get the state as a nicely formatted string.
   def handle_call(:get_state, _from, state) do
-    {:reply, Hangman.Game.pretty_string(state), state}
+    {:reply, Hangman.Game.scrubbed_state(state), state}
   end
 
   # Update the game state with a new guess.

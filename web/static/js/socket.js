@@ -75,7 +75,10 @@ channel.on("new:guess", msg => {
 })
 
 channel.on("new:state", msg => {
-  gameStateContainer.text(msg.state)
+  let phrase_string = msg.state.phrase.join('')
+  let guesses = msg.state.guesses.join(', ')
+  let remaining = msg.state.max_guesses - msg.state.guesses.length
+  gameStateContainer.html(`<b>“${phrase_string}”</b>, with guesses: ${guesses} <em>(${remaining} remaining)</em>`)
 })
 
 export default socket
