@@ -20,7 +20,15 @@ defmodule Hangman.Game do
   Returns the game state as a prettily formated string.
   """
   def pretty_string(state) do
-    phrase = state.phrase
+    phrase = state |> pretty_phrase
+    guesses = state.guesses |> Enum.join(", ")
+    remaining = state.max_guesses - Enum.count(state.guesses)
+
+    "“#{phrase}”, with guesses: #{guesses} (#{remaining} remaining)"
+  end
+
+  defp pretty_phrase(state) do
+    state.phrase
     |> String.codepoints
     |> Enum.map(fn(x) ->
       if x =~ ~r/[a-zA-Z]/ && !Enum.member?(state.guesses, x) do
@@ -29,9 +37,6 @@ defmodule Hangman.Game do
         x
       end
     end)
-    guesses = state.guesses |> Enum.join(", ")
-    remaining = state.max_guesses - Enum.count(state.guesses)
-    "“#{phrase}”, with guesses: #{guesses} (#{remaining} remaining)"
   end
 
   @doc """
@@ -40,11 +45,17 @@ defmodule Hangman.Game do
   last guess, it is ignored.
   """
   def guess(state, letter) do
-    if Enum.member?(state.guesses, letter) || Time.elapsed(state.last_guess_time, :seconds) < 2 do
-      state
-    else
-      updated_guesses = [letter | state.guesses]
-      %{state | guesses: updated_guesses, last_guess_time: Time.now}
+    cond do
+      is_finished?(state) == {true, _} ->
+        {:finished, state}
+      Enum.member?(state.guesses, letter) ->
+        {:duplicate, state}
+      Time.elapsed(state.last_guess_time, :seconds) < 2 ->
+        {:too_soon, state}
+      true ->
+        updated_guesses = [letter | state.guesses]
+        new_state = %{state | guesses: updated_guesses, last_guess_time: Time.now}
+        {:ok, new_state}
     end
   end
 
@@ -69,7 +80,7 @@ defmodule Hangman.Game do
 
   defp is_won?(state) do
     state.phrase
-    |> unique_letters_in_phrase
+    |> unique_letters_in_string
     |> Enum.all?(fn(x) ->
       Enum.member?(state.guesses, x)
     end)
@@ -77,8 +88,8 @@ defmodule Hangman.Game do
 
   # Takes a string and returns a list of unique
   # letters (filtering out any non-letter characters).
-  defp unique_letters_in_phrase(phrase) do
-    phrase
+  defp unique_letters_in_string(string) do
+    string
     |> String.codepoints
     |> Enum.filter(fn(x) ->
       x =~ ~r/[a-zA-Z]/

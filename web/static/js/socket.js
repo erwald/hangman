@@ -71,7 +71,7 @@ channel.join()
   .receive("error", resp => { console.log("Unable to join", resp) })
 
 channel.on("new:guess", msg => {
-  gameLogContainer.append(`<p>Somebody guessed ${msg.letter}.</p>`)
+  gameLogContainer.append(`<p>Somebody guessed ${msg.letter} ${msg.result}.</p>`)
 })
 
 channel.on("new:state", msg => {

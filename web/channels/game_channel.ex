@@ -15,13 +15,13 @@ defmodule Hangman.GameChannel do
 
   def terminate(_reason, _socket), do: :ok
 
-  def handle_in("new:guess", msg, socket) do
-    broadcast!(socket, "new:guess", msg)
+  def handle_in("new:guess", %{"letter" => letter}, socket) do
+    result = Hangman.GameServer.guess(@game_server_name, letter)
+    new_state = Hangman.GameServer.get_state(@game_server_name)
 
-    Hangman.GameServer.guess(@game_server_name, msg["letter"])
+    broadcast!(socket, "new:guess", %{letter: letter, result: result})
+    broadcast!(socket, "new:state", %{state: new_state})
 
-    broadcast!(socket, "new:state", %{state: Hangman.GameServer.get_state(@game_server_name)})
-
-    {:reply, {:ok, msg}, socket}
+    {:reply, {:ok, %{letter: letter}}, socket}
   end
 end

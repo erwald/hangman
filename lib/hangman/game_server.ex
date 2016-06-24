@@ -21,7 +21,7 @@ defmodule Hangman.GameServer do
   """
   def guess(pid, letter) do
     IO.puts "Somebody is guessing #{letter}."
-    GenServer.cast(pid, {:guess, letter})
+    GenServer.call(pid, {:guess, letter})
   end
 
   ## Server Callbacks
@@ -33,8 +33,8 @@ defmodule Hangman.GameServer do
     {:reply, state |> Hangman.Game.pretty_string, state}
   end
 
-  def handle_cast({:guess, letter}, state) do
-    state = Hangman.Game.guess(state, letter)
-    {:noreply, state}
+  def handle_call({:guess, letter}, _from, state) do
+    {result, state} = Hangman.Game.guess(state, letter)
+    {:reply, result, state}
   end
 end
