@@ -70,6 +70,7 @@ channel.join()
   .receive("ok", resp => { console.log("Joined successfully", resp) })
   .receive("error", resp => { console.log("Unable to join", resp) })
 
+// Handle new guesses being made.
 channel.on("new:guess", msg => {
   var messageForUser = ""
   switch (msg.result) {
@@ -92,6 +93,7 @@ channel.on("new:guess", msg => {
   gameLogContainer.prepend(`<p>${messageForUser}</p>`)
 })
 
+// Handle changes to the game state.
 channel.on("new:state", msg => {
   let phrase_string = msg.state.phrase.join('')
   let guesses = msg.state.guesses.join(', ')
@@ -99,14 +101,17 @@ channel.on("new:state", msg => {
   switch (msg.state.progress) {
     case "in_progress":
       gameStateContainer.html(`<b>“${phrase_string}”</b>, with guesses: ${guesses} <em>(${remaining} remaining)</em>`)
+      gameInput.prop("disabled", false)
       break;
     case "won":
       gameStateContainer.html(`You won! The phrase was <b>“${phrase_string}”</b> and you managed it with <em>${remaining}</em> guesses left in the bank!`)
       gameLogContainer.text("")
+      gameInput.prop("disabled", true)
       break;
     case "lost":
       gameStateContainer.html(`You lost! The phrase we were looking for was <b>“${phrase_string}”</b>.`)
       gameLogContainer.text("")
+      gameInput.prop("disabled", true)
       break;
   }
 })
