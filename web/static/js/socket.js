@@ -86,7 +86,7 @@ channel.on("new:guess", msg => {
       messageForUser = `<b>Somebody guessed ${msg.letter}.</b>`
       break;
   }
-  gameLogContainer.append(`<p>${messageForUser}</p>`)
+  gameLogContainer.prepend(`<p>${messageForUser}</p>`)
 })
 
 channel.on("new:state", msg => {

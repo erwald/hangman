@@ -29,6 +29,12 @@ defmodule Hangman.GameServer do
   # Restarts the game after a certain amount of time.
   defp restart, do: Process.send_after(self(), :restart, @time_until_restart)
 
+  # Broadcasts a new state to the topic.
+  defp broadcast_state_to_game(state) do
+    scrubbed_state = Hangman.Game.scrubbed_state(state)
+    Hangman.Endpoint.broadcast("games:1", "new:state", %{state: scrubbed_state})
+  end
+
   ## Server Callbacks
 
   def init(:ok), do: {:ok, Hangman.Game.initial_state}
@@ -51,7 +57,12 @@ defmodule Hangman.GameServer do
     if state.progress == :in_progress do
       {:noreply, state}
     else
-      {:noreply, Hangman.Game.initial_state}
+      new_state = Hangman.Game.initial_state
+
+      # Broadcast to the topic saying that the state has changed.
+      broadcast_state_to_game(new_state)
+
+      {:noreply, new_state}
     end
   end
 end

@@ -63,7 +63,8 @@ defmodule Hangman.Game do
   end
 
   @doc """
-  Returns one of the following tuples:
+  Determines whether a given game is finished and, if so, whether it ended in a
+  loss or win for the players. Returns one of the following tuples:
 
     {true, :win}
     {true, :loss}
