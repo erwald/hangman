@@ -59,7 +59,7 @@ let gameLogContainer = $("#game-log")
 gameInput.on("keypress", event => {
   if (event.keyCode === 13) { // Pressed enter.
     let key = gameInput.val()
-    if (/[a-zA-Z]/.test(key)) { // Single alphabetical character.
+    if (/^[a-zA-Z]$/.test(key)) { // Single alphabetical character.
       channel.push("new:guess", {letter: key})
       gameInput.val("")
     }
@@ -73,14 +73,17 @@ channel.join()
 channel.on("new:guess", msg => {
   var messageForUser = ""
   switch (msg.result) {
+    case "invalid_entry":
+      messageForUser = `Somebody tried to guess ${msg.letter}, but that's not a letter, is it?`
+      break;
     case "finished":
       messageForUser = `Somebody tried to make a guess, but the game was already over.`
       break;
     case "duplicate":
-      messageForUser = `Somebody tried to guess ${msg.letter}, but it had already been made.`
+      messageForUser = `Somebody tried to guess ${msg.letter}, but the guess had already been made.`
       break;
     case "too_soon":
-      messageForUser = `Somebody wanted to guess ${msg.letter}, but it was too soon after the previous guess.`
+      messageForUser = `Somebody tried to guess ${msg.letter}, but it was too soon after the previous guess.`
       break;
     case "ok":
       messageForUser = `<b>Somebody guessed ${msg.letter}.</b>`
@@ -93,7 +96,19 @@ channel.on("new:state", msg => {
   let phrase_string = msg.state.phrase.join('')
   let guesses = msg.state.guesses.join(', ')
   let remaining = msg.state.max_guesses - msg.state.guesses.length
-  gameStateContainer.html(`<b>“${phrase_string}”</b>, with guesses: ${guesses} <em>(${remaining} remaining)</em>`)
+  switch (msg.state.progress) {
+    case "in_progress":
+      gameStateContainer.html(`<b>“${phrase_string}”</b>, with guesses: ${guesses} <em>(${remaining} remaining)</em>`)
+      break;
+    case "won":
+      gameStateContainer.html(`You won! The phrase was <b>“${phrase_string}”</b> and you managed it with <em>${remaining}</em> guesses left in the bank!`)
+      gameLogContainer.text("")
+      break;
+    case "lost":
+      gameStateContainer.html(`You lost! The phrase we were looking for was <b>“${phrase_string}”</b>.`)
+      gameLogContainer.text("")
+      break;
+  }
 })
 
 export default socket

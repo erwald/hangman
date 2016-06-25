@@ -1,7 +1,7 @@
 defmodule Hangman.GameServer do
   use GenServer
 
-  @time_until_restart 3000 # In milliseconds.
+  @time_until_restart 10000 # In milliseconds.
 
   ## Client API
 
@@ -9,7 +9,7 @@ defmodule Hangman.GameServer do
   Starts a new game server.
   """
   def start_link(name) do
-    IO.puts "Starting a new game of hangman."
+    IO.puts "Starting a new game of hangman ..."
     GenServer.start_link(__MODULE__, :ok, name: name)
   end
 
@@ -22,7 +22,6 @@ defmodule Hangman.GameServer do
   A player makes a guess.
   """
   def guess(pid, letter) do
-    IO.puts "Somebody is guessing #{letter}."
     GenServer.call(pid, {:guess, letter})
   end
 

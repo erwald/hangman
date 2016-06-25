@@ -13,12 +13,15 @@ defmodule Hangman.Game do
   Returns the initial state of a game.
   """
   def initial_state do
+    phrase = Enum.random(phrases)
+    max_guesses = (phrase |> unique_letters_in_string |> Enum.count) + 5
+
     %Hangman.Game{
-      phrase: Enum.random(phrases),
+      phrase: phrase,
       guesses: [],
       last_guess_time: Time.now,
       progress: :in_progress,
-      max_guesses: 15
+      max_guesses: max_guesses
     }
   end
 
@@ -35,8 +38,9 @@ defmodule Hangman.Game do
     state.phrase
     |> String.codepoints
     |> Enum.map(fn(x) ->
-      is_revealed = Enum.member?(state.guesses, String.downcase(x))
-      if x =~ ~r/[a-zA-Z]/ && !is_revealed, do: "_", else: x
+      has_been_guessed = Enum.member?(state.guesses, String.downcase(x))
+      is_revealed = has_been_guessed || is_finished?(state)
+      if x =~ ~r/[a-z]/i && !is_revealed, do: "_", else: x
     end)
   end
 
@@ -46,9 +50,10 @@ defmodule Hangman.Game do
   ignored.
   """
   def guess(state, letter) do
-    {is_finished, _} = is_finished?(state)
     cond do
-      is_finished ->
+      !(letter =~ ~r/^[a-z]$/i) ->
+        {:invalid_entry, state}
+      state.progress != :in_progress ->
         {:finished, state}
       Enum.member?(state.guesses, letter) ->
         {:duplicate, state}
@@ -57,31 +62,19 @@ defmodule Hangman.Game do
       true ->
         new_guesses = [String.downcase(letter) | state.guesses] |> Enum.sort
         new_state = %{state | guesses: new_guesses, last_guess_time: Time.now}
-        {_, new_progress} = is_finished?(new_state)
+        new_progress = cond do
+          is_won?(new_state) -> :won
+          is_lost?(new_state) -> :lost
+          true -> :in_progress
+        end
         {:ok, %{new_state | progress: new_progress}}
     end
   end
 
-  @doc """
-  Determines whether a given game is finished and, if so, whether it ended in a
-  loss or win for the players. Returns one of the following tuples:
+  # Determines whether a given game is finished or still in progress.
+  defp is_finished?(state), do: is_won?(state) || is_lost?(state)
 
-    {true, :win}
-    {true, :loss}
-    {false, nil}
-  """
-  def is_finished?(state) do
-    cond do
-      is_won?(state) -> {true, :won}
-      is_lost?(state) -> {true, :lost}
-      true -> {false, :in_progress}
-    end
-  end
-
-  defp is_lost?(state) do
-    Enum.count(state.guesses) >= state.max_guesses
-  end
-
+  # Determines whether a given game was won.
   defp is_won?(state) do
     state.phrase
     |> unique_letters_in_string
@@ -90,15 +83,19 @@ defmodule Hangman.Game do
     end)
   end
 
+  # Determines whether a given game was lost.
+  defp is_lost?(state), do: Enum.count(state.guesses) >= state.max_guesses
+
   # Takes a string and returns a list of unique lowercase letters (filtering out
   # any non-letter characters).
   defp unique_letters_in_string(string) do
     string
+    |> String.downcase
     |> String.codepoints
     |> Enum.filter(fn(x) ->
-      x =~ ~r/[a-zA-Z]/
+      x =~ ~r/[a-z]/
     end)
-    |> Enum.map(&String.downcase(&1))
+    |> Enum.uniq
   end
 
   defp phrases do
