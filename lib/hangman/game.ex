@@ -55,7 +55,7 @@ defmodule Hangman.Game do
         {:invalid_entry, state}
       state.progress != :in_progress ->
         {:finished, state}
-      Enum.member?(state.guesses, letter) ->
+      Enum.member?(state.guesses, String.downcase(letter)) ->
         {:duplicate, state}
       Time.elapsed(state.last_guess_time, :seconds) < @min_time_after_guess ->
         {:too_soon, state}

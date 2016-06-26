@@ -56,6 +56,10 @@ let gameStateContainer = $("#game-state")
 let gameInput = $("#game-input")
 let gameLogContainer = $("#game-log")
 
+channel.join()
+  .receive("ok", resp => { console.log("Joined successfully", resp) })
+  .receive("error", resp => { console.log("Unable to join", resp) })
+  
 gameInput.on("keypress", event => {
   if (event.keyCode === 13) { // Pressed enter.
     let key = gameInput.val()
@@ -65,10 +69,6 @@ gameInput.on("keypress", event => {
     }
   }
 })
-
-channel.join()
-  .receive("ok", resp => { console.log("Joined successfully", resp) })
-  .receive("error", resp => { console.log("Unable to join", resp) })
 
 // Handle new guesses being made.
 channel.on("new:guess", msg => {
