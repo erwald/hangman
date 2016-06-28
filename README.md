@@ -1,20 +1,21 @@
 # Hangman
 
-To start your Phoenix app:
+A hangman implementation using Phoenix channels.
+
+To start the app:
 
   * Install dependencies with `mix deps.get`
-  * Create and migrate your database with `mix ecto.create && mix ecto.migrate`
   * Install Node.js dependencies with `npm install`
   * Start Phoenix endpoint with `mix phoenix.server`
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
-Ready to run in production? Please [check our deployment guides](http://www.phoenixframework.org/docs/deployment).
+## The code
 
-## Learn more
+The following files may be of interest:
 
-  * Official website: http://www.phoenixframework.org/
-  * Guides: http://phoenixframework.org/docs/overview
-  * Docs: http://hexdocs.pm/phoenix
-  * Mailing list: http://groups.google.com/group/phoenix-talk
-  * Source: https://github.com/phoenixframework/phoenix
+  * `hangman.ex`, which defines the actual application and creates the supervision tree.
+  * `game.ex`, which contains most of the actual game logic.
+  * `game_server.ex`, which contains and handles the game state.
+  * `game_channel.ex`, the channel, which handles the communication with the clients.
+  * `socket.js`, the client, which handles communication with the game server (via the channel).
